@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kubernetes GitOps deployment information dashboard">
+  <title>GitOps Deployment Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">KUBERNETES RELEASE INFORMATION</p>
+      <h1>GitOps Deployment Dashboard</h1>
+      <p class="subtitle">GitHub Actions와 Argo CD를 통해 배포된 애플리케이션 정보</p>
+    </div>
+    <div class="header-status">
+      <span id="status-badge" class="badge healthy">● Healthy</span>
+      <span id="last-updated">확인 중</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-grid" aria-label="배포 요약">
+      <article class="summary-card">
+        <span>Service</span>
+        <strong id="service">-</strong>
+      </article>
+      <article class="summary-card">
+        <span>Environment</span>
+        <strong id="environment" class="environment">-</strong>
+      </article>
+      <article class="summary-card">
+        <span>Version</span>
+        <strong id="version">-</strong>
+      </article>
+      <article class="summary-card">
+        <span>Status</span>
+        <strong id="status" class="status-text">-</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <p>RELEASE</p>
+          <h2>Deployment Information</h2>
+        </div>
+        <span class="method">GitOps Managed</span>
+      </div>
+      <div class="info-grid">
+        <div class="wide"><span>Image Repository</span><strong id="image-repository">-</strong></div>
+        <div><span>Image Tag</span><strong id="image-tag" class="code-value">-</strong></div>
+        <div><span>Git Commit</span><strong id="git-commit" class="code-value">-</strong></div>
+        <div><span>Git Branch</span><strong id="git-branch">-</strong></div>
+        <div><span>Build Number</span><strong id="build-number">-</strong></div>
+        <div><span>Build Time</span><strong id="build-time">-</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <p>RUNTIME</p>
+          <h2>Kubernetes Information</h2>
+        </div>
+        <span class="method">NodePort 30080</span>
+      </div>
+      <div class="info-grid three-columns">
+        <div><span>Namespace</span><strong id="namespace">-</strong></div>
+        <div><span>Pod Name</span><strong id="pod-name">-</strong></div>
+        <div><span>Node Name</span><strong id="node-name">-</strong></div>
+        <div><span>Container Port</span><strong>8080</strong></div>
+        <div><span>Service Type</span><strong>NodePort</strong></div>
+        <div><span>Uptime</span><strong id="uptime">-</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <div>
+          <p>PIPELINE</p>
+          <h2>GitOps Delivery Flow</h2>
+        </div>
+      </div>
+      <div class="pipeline">
+        <div class="pipeline-step"><b>1</b><span>Test</span><em>Passed</em></div>
+        <div class="pipeline-step"><b>2</b><span>Build</span><em>Completed</em></div>
+        <div class="pipeline-step"><b>3</b><span>ECR Push</span><em>Completed</em></div>
+        <div class="pipeline-step"><b>4</b><span>GitOps Update</span><em>Completed</em></div>
+        <div class="pipeline-step"><b>5</b><span>Argo CD</span><em>Synced</em></div>
+      </div>
+      <p class="pipeline-note">GitHub Push → GitHub Actions → ECR → Kustomize → Argo CD → Kubernetes</p>
+    </section>
+  </main>
+
+  <footer>GitOps Version Dashboard · Kubernetes NodePort 30080</footer>
+</body>
+</html>
+

@@ -1,0 +1,132 @@
+name: CI and GitOps Update
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: gitops-version-dashboard
+  GITOPS_REPOSITORY: InTaewoo/gitops-version-dashboard-config
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  build-and-update-gitops:
+    name: Build, Push and Update GitOps
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Prepare build metadata
+        shell: bash
+        run: |
+          echo "IMAGE_TAG=${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+          echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build \
+            -t "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" \
+            .
+
+          docker push \
+            "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.GITOPS_REPOSITORY }}
+          token: ${{ secrets.GITOPS_REPO_TOKEN }}
+          path: gitops-config
+
+      - name: Update GitOps image and metadata
+        shell: bash
+        run: |
+          CONFIG_DIR="gitops-config/overlays/prod"
+
+          sed -i -E \
+            "s|^    newTag:.*|    newTag: ${IMAGE_TAG}|" \
+            "${CONFIG_DIR}/kustomization.yaml"
+
+          sed -i -E \
+            "s|^APP_VERSION=.*|APP_VERSION=${APP_VERSION}|" \
+            "${CONFIG_DIR}/app.env"
+
+          sed -i -E \
+            "s|^IMAGE_TAG=.*|IMAGE_TAG=${IMAGE_TAG}|" \
+            "${CONFIG_DIR}/app.env"
+
+          sed -i -E \
+            "s|^GIT_COMMIT=.*|GIT_COMMIT=${GITHUB_SHA}|" \
+            "${CONFIG_DIR}/app.env"
+
+          sed -i -E \
+            "s|^GIT_BRANCH=.*|GIT_BRANCH=${GITHUB_REF_NAME}|" \
+            "${CONFIG_DIR}/app.env"
+
+          sed -i -E \
+            "s|^BUILD_NUMBER=.*|BUILD_NUMBER=${GITHUB_RUN_NUMBER}|" \
+            "${CONFIG_DIR}/app.env"
+
+          sed -i -E \
+            "s|^BUILD_TIME=.*|BUILD_TIME=${BUILD_TIME}|" \
+            "${CONFIG_DIR}/app.env"
+
+      - name: Commit GitOps changes
+        working-directory: gitops-config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add overlays/prod
+
+          if git diff --cached --quiet; then
+            echo "No GitOps changes"
+            exit 0
+          fi
+
+          git commit -m "deploy: dashboard ${IMAGE_TAG}"
+          git push origin main
