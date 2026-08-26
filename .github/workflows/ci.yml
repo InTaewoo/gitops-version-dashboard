@@ -129,4 +129,4 @@ jobs:
           fi
 
           git commit -m "deploy: dashboard ${IMAGE_TAG}"
-          git push origin main
+          git push origin HEAD:master
