@@ -1,6 +1,6 @@
 {
   "name": "gitops-version-dashboard",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "GitOps deployment version dashboard",
   "private": true,
   "type": "commonjs",
