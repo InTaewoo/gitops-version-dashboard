@@ -1,12 +1,12 @@
-name: CI and GitOps Update
+name: CI and GitOps Update!
 
 on:
   pull_request:
     branches:
-      - main
+      - master
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: read
