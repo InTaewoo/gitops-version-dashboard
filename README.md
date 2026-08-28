@@ -48,6 +48,9 @@ Pull Request에서는 테스트 Job만 실행합니다. `master` 브랜치 Push�
 
 ### 배포 정보 화면
 
+- `Deployment v1 = Stable = Application v1.0.1` 대응 관계 표시
+- `Deployment v2 = Canary = Application v1.1.0` 대응 관계 표시
+- 현재 요청을 처리한 Release Track 카드 실시간 강조
 - 서비스 이름과 실행 환경
 - 애플리케이션 버전과 상태
 - ECR Repository와 이미지 태그
@@ -58,6 +61,7 @@ Pull Request에서는 테스트 Job만 실행합니다. `master` 브랜치 Push�
 - CI/CD 단계 표시
 - 30초마다 `/api/info` 자동 갱신
 - API 오류 발생 시 화면의 상태를 `Unhealthy`로 변경
+- HTML 및 API에 `no-store` 정책을 적용하여 이전 버전 화면 캐시 방지
 
 ### API
 
@@ -81,6 +85,8 @@ Kubernetes Liveness Probe와 Readiness Probe에서 사용하는 엔드포인트�
   "service": "gitops-version-dashboard",
   "environment": "production",
   "version": "1.1.0",
+  "releaseTrack": "v2",
+  "releaseRole": "Canary",
   "status": "Healthy",
   "imageRepository": "<AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-2.amazonaws.com/gitops-version-dashboard",
   "imageTag": "91eafae9",

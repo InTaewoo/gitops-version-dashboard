@@ -3,41 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Kubernetes GitOps deployment information dashboard">
-  <title>GitOps Deployment Dashboard</title>
+  <meta name="description" content="Kubernetes GitOps Stable 및 Canary 배포 정보 대시보드">
+  <title>GitOps Release Dashboard</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="hero">
-    <div>
-      <p class="eyebrow">KUBERNETES RELEASE INFORMATION</p>
-      <h1>GitOps Deployment Dashboard</h1>
-      <p class="subtitle">GitHub Actions와 Argo CD를 통해 배포된 애플리케이션 정보</p>
-      <p class="deployment-demo">◆ ISTIO CANARY RELEASE · v1.1.0</p>
+    <div class="hero-copy">
+      <p class="eyebrow">LIVE RELEASE OBSERVABILITY</p>
+      <h1>지금 이 요청을 처리한<br>배포 버전을 확인하세요</h1>
+      <p class="subtitle">GitHub Actions → ECR → Argo CD → Istio로 이어지는 실제 응답 기준 정보입니다.</p>
+
+      <div id="current-release" class="current-release loading" aria-live="polite">
+        <span class="current-release-label">현재 요청 처리 배포</span>
+        <div class="current-release-title">
+          <strong id="current-track">확인 중</strong>
+          <span id="current-role">응답을 기다리고 있습니다</span>
+        </div>
+        <p><span id="current-version">Application -</span><span class="dot">·</span><span id="current-image">Image -</span></p>
+      </div>
     </div>
+
     <div class="header-status">
-      <span id="status-badge" class="badge healthy">● Healthy</span>
-      <span id="last-updated">확인 중</span>
+      <span id="status-badge" class="badge checking">● 확인 중</span>
+      <span id="last-updated">배포 정보 조회 중</span>
     </div>
   </header>
 
   <main>
-    <section class="summary-grid" aria-label="배포 요약">
-      <article class="summary-card">
-        <span>Service</span>
-        <strong id="service">-</strong>
+    <section class="release-section" aria-labelledby="release-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">RELEASE MAP</p>
+          <h2 id="release-title">배포 트랙과 애플리케이션 버전</h2>
+          <p>Deployment 이름과 애플리케이션 버전은 서로 다른 개념입니다. 아래처럼 대응됩니다.</p>
+        </div>
+        <span class="live-indicator"><i></i> 요청마다 실시간 판별</span>
+      </div>
+
+      <div class="release-map">
+        <article id="release-v1-card" class="release-card stable">
+          <div class="release-card-top">
+            <span class="track-badge">Deployment v1</span>
+            <span id="release-v1-state" class="request-state">현재 요청 아님</span>
+          </div>
+          <div class="release-symbol">S</div>
+          <p class="release-role">STABLE</p>
+          <h3>안정 버전</h3>
+          <dl>
+            <div><dt>애플리케이션</dt><dd>v1.0.1</dd></div>
+            <div><dt>역할</dt><dd>운영 기준점 · 즉시 롤백 대상</dd></div>
+          </dl>
+        </article>
+
+        <div class="release-divider" aria-hidden="true">
+          <span>ISTIO</span>
+          <b>⇄</b>
+          <small>가중치 라우팅</small>
+        </div>
+
+        <article id="release-v2-card" class="release-card canary">
+          <div class="release-card-top">
+            <span class="track-badge">Deployment v2</span>
+            <span id="release-v2-state" class="request-state">현재 요청 아님</span>
+          </div>
+          <div class="release-symbol">C</div>
+          <p class="release-role">CANARY</p>
+          <h3>신규 검증 버전</h3>
+          <dl>
+            <div><dt>애플리케이션</dt><dd>v1.1.0</dd></div>
+            <div><dt>역할</dt><dd>신규 이미지 · 단계적 검증 대상</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="현재 응답 요약">
+      <article class="summary-card emphasis">
+        <span>현재 처리 트랙</span>
+        <strong id="summary-track">-</strong>
       </article>
       <article class="summary-card">
-        <span>Environment</span>
-        <strong id="environment" class="environment">-</strong>
-      </article>
-      <article class="summary-card">
-        <span>Version</span>
+        <span>Application Version</span>
         <strong id="version">-</strong>
       </article>
       <article class="summary-card">
-        <span>Status</span>
+        <span>Image Tag</span>
+        <strong id="image-tag-summary" class="code-value">-</strong>
+      </article>
+      <article class="summary-card">
+        <span>상태</span>
         <strong id="status" class="status-text">-</strong>
       </article>
     </section>
@@ -45,12 +101,14 @@
     <section class="panel">
       <div class="panel-title">
         <div>
-          <p>RELEASE</p>
-          <h2>Deployment Information</h2>
+          <p>RELEASE ARTIFACT</p>
+          <h2>현재 응답의 빌드 정보</h2>
         </div>
         <span class="method">GitOps Managed</span>
       </div>
       <div class="info-grid">
+        <div><span>Service</span><strong id="service">-</strong></div>
+        <div><span>Environment</span><strong id="environment" class="environment">-</strong></div>
         <div class="wide"><span>Image Repository</span><strong id="image-repository">-</strong></div>
         <div><span>Image Tag</span><strong id="image-tag" class="code-value">-</strong></div>
         <div><span>Git Commit</span><strong id="git-commit" class="code-value">-</strong></div>
@@ -63,26 +121,26 @@
     <section class="panel">
       <div class="panel-title">
         <div>
-          <p>RUNTIME</p>
-          <h2>Kubernetes Information</h2>
+          <p>KUBERNETES RUNTIME</p>
+          <h2>요청을 처리한 Pod</h2>
         </div>
-        <span class="method">NodePort 30080</span>
+        <span class="method">Istio Gateway :30081</span>
       </div>
       <div class="info-grid three-columns">
         <div><span>Namespace</span><strong id="namespace">-</strong></div>
         <div><span>Pod Name</span><strong id="pod-name">-</strong></div>
         <div><span>Node Name</span><strong id="node-name">-</strong></div>
         <div><span>Container Port</span><strong>8080</strong></div>
-        <div><span>Service Type</span><strong>NodePort</strong></div>
+        <div><span>Service 경로</span><strong>Istio → ClusterIP</strong></div>
         <div><span>Uptime</span><strong id="uptime">-</strong></div>
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel pipeline-panel">
       <div class="panel-title">
         <div>
-          <p>PIPELINE</p>
-          <h2>GitOps Delivery Flow</h2>
+          <p>DELIVERY PIPELINE</p>
+          <h2>GitOps 배포 흐름</h2>
         </div>
       </div>
       <div class="pipeline">
@@ -92,10 +150,10 @@
         <div class="pipeline-step"><b>4</b><span>GitOps Update</span><em>Completed</em></div>
         <div class="pipeline-step"><b>5</b><span>Argo CD</span><em>Synced</em></div>
       </div>
-      <p class="pipeline-note">GitHub Push → GitHub Actions → ECR → Kustomize → Argo CD → Kubernetes</p>
+      <p class="pipeline-note">GitHub Push → GitHub Actions → ECR → Kustomize → Argo CD → Kubernetes → Istio</p>
     </section>
   </main>
 
-  <footer>GitOps Version Dashboard · Kubernetes NodePort 30080</footer>
+  <footer>GitOps Release Dashboard · v1 Stable / v2 Canary · Istio Gateway 30081</footer>
 </body>
 </html>
